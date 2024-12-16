@@ -41,11 +41,15 @@ Graph *STATIC (Fill)(int vertices, const char *labels[vertices])
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-Graph *STATIC (FromLabels)(ObjectArray *labels)
+Graph *STATIC (FromLabels)(void *enumerable)
 {
-  Graph *graph = NEW (Graph) (labels->base.size);
+  Iterator *it    = NEW (Iterator)(enumerable);
+  Graph    *graph = NEW (Graph) (count(it));
 
-  Array_Merge((Array*)graph->labels, (Array*)labels);
+  for (; !done(it); next(it))
+  {
+    ObjectArray_Push(graph->labels, String_Copy(it->base));
+  }
 
   return graph;
 }

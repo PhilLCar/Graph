@@ -1,5 +1,5 @@
 #include <diagnostic.h>
-#include <graph.h>
+#include <graphfile.h>
 #include <print.h>
 #include <collection.str.h>
 
@@ -28,15 +28,17 @@ int main(void)
    */
   CHECK_MEMORY
 
-  Graph *graph = Graph_Fill(5, (const char*[]){ "A", "B", "C", "D", "E"});
+  Graph *graph = (Graph*)NEW (GraphFile)("tst/graph.json", ACCESS_READ | ACCESS_WRITE);
+  
+  //Graph_Fill(5, (const char*[]){ "A", "B", "C", "D", "E"});
 
-  Graph_SetKey(graph, "A", "D", 0.5);
-  Graph_SetKey(graph, "A", "E", 0.3);
-  Graph_SetKey(graph, "B", "A", 0.8);
-  Graph_SetKey(graph, "B", "C", 0.3);
-  Graph_SetKey(graph, "D", "C", 0.4);
-  Graph_SetKey(graph, "E", "B", 0.2);
-  Graph_SetKey(graph, "E", "A", 0.3);
+  // Graph_SetKey(graph, "A", "D", 0.5);
+  // Graph_SetKey(graph, "A", "E", 0.3);
+  // Graph_SetKey(graph, "B", "A", 0.8);
+  // Graph_SetKey(graph, "B", "C", 0.3);
+  // Graph_SetKey(graph, "D", "C", 0.4);
+  // Graph_SetKey(graph, "E", "B", 0.2);
+  // Graph_SetKey(graph, "E", "A", 0.3);
 
   print("%[%3g]O\n", graph);
 

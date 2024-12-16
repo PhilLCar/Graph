@@ -6,6 +6,7 @@
 #include <matrix.h>
 #include <objectarray.h>
 #include <list.h>
+#include <iterator.h>
 
 #define TYPENAME Graph
 
@@ -19,7 +20,7 @@ OBJECT (int vertices) INHERIT (Matrix)
 END_OBJECT (2);
 
 Graph *STATIC (Fill)(int vertices, const char *labels[vertices]);
-Graph *STATIC (FromLabels) (ObjectArray *labels);
+Graph *STATIC (FromLabels) (void *enumerable);
 
 int    _(Key)(const char *label);
 int    _(Label)(const String *label);
