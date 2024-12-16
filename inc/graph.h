@@ -19,7 +19,7 @@ OBJECT (int vertices) INHERIT (Matrix)
   ObjectArray *labels;
 END_OBJECT (2);
 
-Graph *STATIC (Fill)(int vertices, const char *labels[vertices]);
+Graph *STATIC (From)(int vertices, const char *labels[vertices]);
 Graph *STATIC (FromLabels) (void *enumerable);
 
 int    _(Key)(const char *label);
