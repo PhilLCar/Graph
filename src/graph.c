@@ -83,36 +83,38 @@ List *path(Matrix *base, Matrix *current, int step, int i, int j)
 
   if (current->base[i][j]) {
     list = NEW (List) ();
-  } else if (step < base->cols) {
-    list = path(base, Matrix_Cross(Matrix_Copy(base), Matrix_Copy(IFNULL(current, base))), step + 1, i, j);
+  } else if (step < current->cols) {
+    list = path(base, Matrix_Cross(Matrix_Copy(base), Matrix_Copy(current)), step + 1, i, j);
 
     if (list) {
-      int prev = IFNULL(List_Head(list), j);
+      int prev = List_Empty(list) ? i : *(int*)List_Head(list);
 
       Vec *row = Matrix_Row(base, prev);
-      Vec *col = Matrix_Col(base, i);
+      Vec *col = Matrix_Col(current, j);
 
       for (int k = 0; k < row->dimension; k++) {
         if (row->base[k] && col->base[k])
         {
-          list = List_Push(list, &k, 0);
+          list = List_PushValue(list, TYPEOF (int), &k);
           break;
         }
       }
+
+      DELETE (row);
+      DELETE (col);
     }
   }
 
   DELETE (current);
-  DELETE (base);
 
   return list;
 }
 
 double _(Weight)(int i, int j)
 {
-  Matrix *check = NEW (Matrix)(this->base.rows, this->base.cols);
+  //Matrix *check = NEW (Matrix)(this->base.rows, this->base.cols);
 
-
+  return 0;
 }
 
 double _(WeightL)(const char *li, const char *lj)
