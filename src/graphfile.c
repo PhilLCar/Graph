@@ -74,6 +74,10 @@ JSON *_(ToJSON)()
   List *labels  = NEW (List)();
   List *weights = NEW (List)();
 
+  for (Iterator *it = NEW (Iterator)(BASE(0)->labels); !done(it); next(it)) {
+    List_Add(labels, String_Copy(it->base));
+  }
+
   Map_Set((Map*)json, NEW (String)("labels"),  labels);
   Map_Set((Map*)json, NEW (String)("weights"), weights);
 
