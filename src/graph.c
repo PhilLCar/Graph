@@ -67,6 +67,50 @@ int _(Label)(const String *label)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+String *_(NameOf)(int number)
+{
+  return ObjectArray_At(this->labels, number);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int _(AddKey)(const char *label)
+{
+  return Graph_AddLabel(this, NEW (String)(label));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int _(AddLabel)(String *label)
+{
+  if (!ObjectArray_Contains(this->labels, label)) {
+    Matrix old = *BASE(0);
+
+    Matrix_Construct(BASE(0), old.rows + 1, old.cols + 1);
+
+    for (int i = 0; i < old.rows; i++) {
+      for (int j = 0; j < old.cols; j++) {
+        this->base.base[i][j] = old.base[i][j];
+      }
+    }
+
+    for (int i = 0; i < old.rows; i++) {
+      this->base.base[i][old.cols] = -1;
+    }
+    
+    for (int j = 0; j < old.cols; j++) {
+      this->base.base[old.cols][j] = -1;
+    }
+
+    ObjectArray_Push(this->labels, label);
+
+    Matrix_Destruct(&old);
+  } else {
+    DELETE (label);
+  }
+
+  return BASE(0)->rows;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 void _(Set)(int i, int j, double weight)
 {
   BASE(0)->base[i][j] = weight;
@@ -90,8 +134,8 @@ void _(SetLabel)(const String *li, const String *lj, double weight)
   return Graph_Set(this, i, j, weight);
 }
 
-/******************************************************************************/
-Matrix *_(adjacencyMatrix)()
+////////////////////////////////////////////////////////////////////////////////
+Matrix *_(AdjacencyMatrix)()
 {
   Matrix *m = NEW (Matrix) (BASE(0)->rows, BASE(0)->cols);
 
@@ -146,7 +190,7 @@ List *STATIC (nodes)(Matrix *base, Matrix *current, int step, int i, int j)
 double _(Weight)(int i, int j)
 {
   double  weight      = -1;
-  List   *throughpath = Graph_nodes(Graph_adjacencyMatrix(this), NULL, 0, i, j);
+  List   *throughpath = Graph_nodes(Graph_AdjacencyMatrix(this), NULL, 0, i, j);
 
   if (throughpath) {
     int last = i;
@@ -189,7 +233,7 @@ double _(WeightLabel)(const String *li, const String *lj)
 ////////////////////////////////////////////////////////////////////////////////
 int _(Reaches)(int i, int j)
 {
-  List *throughpath = Graph_nodes(Graph_adjacencyMatrix(this), NULL, 0, i, j);
+  List *throughpath = Graph_nodes(Graph_AdjacencyMatrix(this), NULL, 0, i, j);
   int   reaches     = throughpath != NULL;
 
   DELETE (throughpath);

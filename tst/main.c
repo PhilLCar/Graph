@@ -29,6 +29,8 @@ int main(void)
   CHECK_MEMORY
 
   Graph *graph = (Graph*)NEW (GraphFile)("tst/graph.json", ACCESS_READ);
+
+  Graph_AddKey(graph, "F");
   
   //Graph_Fill(5, (const char*[]){ "A", "B", "C", "D", "E"});
 
