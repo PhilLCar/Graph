@@ -4,7 +4,7 @@
 #include <diagnostic.h>
 #include <oop.h>
 #include <matrix.h>
-#include <objectarray.h>
+#include <set.h>
 #include <list.h>
 #include <iterator.h>
 
@@ -16,7 +16,7 @@
  */
 
 OBJECT (int vertices) INHERIT (Matrix)
-  ObjectArray *labels;
+  Set *labels;
 END_OBJECT (2);
 
 Graph *STATIC (From)(int vertices, const char *labels[vertices]);
@@ -27,6 +27,8 @@ int     _(Label)(const String *label);
 String *_(NameOf)(int number);
 int     _(AddKey)(const char *label);
 int     _(AddLabel)(String *label);
+void    _(RemoveKey)(const char *label);
+void    _(Remove)(const String *label);
 void    _(Set)(int i, int j, double weight);
 void    _(SetKey)(const char *li, const char *lj, double weight);
 void    _(SetLabel)(const String *li, const String *lj, double weight);

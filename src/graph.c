@@ -6,7 +6,7 @@
 Graph *_(Construct)(int vertices)
 {
   if (Matrix_Construct(BASE(0), vertices, vertices)) {
-    this->labels = NEW (ObjectArray) (TYPEOF (String));
+    this->labels = NEW (Set) (TYPEOF (String));
 
     // Initialize all nodes as separate from one another
     for (int i = 0; i < BASE(0)->rows; i++) {
@@ -34,7 +34,7 @@ Graph *STATIC (Fill)(int vertices, const char *labels[vertices])
   Graph *graph = NEW (Graph) (vertices);
 
   for (int i = 0; i < vertices; i++) {
-    ObjectArray_Push(graph->labels, NEW (String) (labels[i]));
+    Set_Add(graph->labels, NEW (String) (labels[i]));
   }
 
   return graph;
@@ -43,13 +43,16 @@ Graph *STATIC (Fill)(int vertices, const char *labels[vertices])
 ////////////////////////////////////////////////////////////////////////////////
 Graph *STATIC (FromLabels)(void *enumerable)
 {
-  Iterator *it    = NEW (Iterator)(enumerable);
-  Graph    *graph = NEW (Graph) (count(it));
+  Set *labels = NEW (Set) (TYPEOF (String));
 
-  for (; !done(it); next(it))
-  {
-    ObjectArray_Push(graph->labels, String_Copy(it->base));
+  for (Iterator *it = NEW (Iterator)(enumerable); !done(it); next(it)) {
+    Set_Add(labels, String_Copy(it->base));
   }
+
+  Graph *graph = NEW (Graph) (((Array*)labels)->size);
+
+  DELETE (graph->labels);
+  graph->labels = labels;
 
   return graph;
 }
@@ -57,19 +60,19 @@ Graph *STATIC (FromLabels)(void *enumerable)
 ////////////////////////////////////////////////////////////////////////////////
 int _(Key)(const char *label)
 {
-  return ObjectArray_IndexOfKey(this->labels, label);
+  return Set_ContainsKey(this->labels, label);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 int _(Label)(const String *label)
 {
-  return ObjectArray_IndexOf(this->labels, label);
+  return Set_Contains(this->labels, label);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 String *_(NameOf)(int number)
 {
-  return ObjectArray_At(this->labels, number);
+  return ObjectArray_At((ObjectArray*)this->labels, number);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,26 +84,28 @@ int _(AddKey)(const char *label)
 ////////////////////////////////////////////////////////////////////////////////
 int _(AddLabel)(String *label)
 {
-  if (!ObjectArray_Contains(this->labels, label)) {
+  int index = Set_Add(this->labels, label);
+
+  if (index >= 0) {
     Matrix old = *BASE(0);
 
     Matrix_Construct(BASE(0), old.rows + 1, old.cols + 1);
 
-    for (int i = 0; i < old.rows; i++) {
-      for (int j = 0; j < old.cols; j++) {
-        this->base.base[i][j] = old.base[i][j];
+    for (int i = 0, m = 0; i < old.rows; i++) {
+      if (i == index) ++m;
+      for (int j = 0, n = 0; j < old.cols; j++) {
+        if (j == index) ++n;
+        this->base.base[i + m][j + n] = old.base[i][j];
       }
     }
 
-    for (int i = 0; i < old.rows; i++) {
-      this->base.base[i][old.cols] = -1;
+    for (int i = 0; i < this->base.rows; i++) {
+      this->base.base[i][index] = (i == index) - 1;
     }
     
-    for (int j = 0; j < old.cols; j++) {
-      this->base.base[old.cols][j] = -1;
+    for (int j = 0; j < this->base.cols; j++) {
+      this->base.base[index][j] = (j == index) - 1;
     }
-
-    ObjectArray_Push(this->labels, label);
 
     Matrix_Destruct(&old);
   } else {
@@ -108,6 +113,29 @@ int _(AddLabel)(String *label)
   }
 
   return BASE(0)->rows;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void _(RemoveKey)(const char *label)
+{
+  int index = Set_ContainsKey(this->labels, label);
+
+  if (index >= 0 && Set_RemoveKey(this->labels, label)) {
+    Matrix *new, *old = talloc(TYPEOF(Matrix));
+
+    *old = *BASE(0);
+    new  = Matrix_Rem(old, index, index);
+
+    memcpy(this, new, sizeof(Matrix));
+
+    tfree(new);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void _(RemoveLabel)(const String *label)
+{
+  Graph_RemoveKey(this, label->base);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
