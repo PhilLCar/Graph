@@ -21,6 +21,8 @@ GraphFile *_(Construct)(const char *filename, AccessModes mode)
         tfree(graph);
 
         DELETE (file);
+      } else {
+        Graph_Construct(BASE(0), 0);
       }
     }
   }
