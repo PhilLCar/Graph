@@ -84,9 +84,12 @@ int _(AddKey)(const char *label)
 ////////////////////////////////////////////////////////////////////////////////
 int _(AddLabel)(String *label)
 {
+  int added = this->labels->base.base.size;
   int index = Set_Add(this->labels, label);
 
-  if (index >= 0) {
+  added -= this->labels->base.base.size;
+
+  if (added) {
     Matrix old = *BASE(0);
 
     Matrix_Construct(BASE(0), old.rows + 1, old.cols + 1);
@@ -108,8 +111,6 @@ int _(AddLabel)(String *label)
     }
 
     Matrix_Destruct(&old);
-  } else {
-    DELETE (label);
   }
 
   return BASE(0)->rows;
