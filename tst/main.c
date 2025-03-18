@@ -6,13 +6,13 @@
 
 /*    .3
 B *-------+* C
-  |+       +
+  ++       +
   | \.2    |
   |  \     |
 .8| E *    | .4
   |  +     |
   | /.3    |
-  ++       |
+  |+       |
 A *-------+* D
      .5
 */
@@ -29,24 +29,34 @@ int main(void)
   CHECK_MEMORY
 
   Graph *graph = (Graph*)NEW (GraphFile)("tst/graph.json", ACCESS_READ);
-  
-  //Graph_Fill(5, (const char*[]){ "A", "B", "C", "D", "E"});
-
-  // Graph_SetKey(graph, "A", "D", 0.5);
-  // Graph_SetKey(graph, "A", "E", 0.3);
-  // Graph_SetKey(graph, "B", "A", 0.8);
-  // Graph_SetKey(graph, "B", "C", 0.3);
-  // Graph_SetKey(graph, "D", "C", 0.4);
-  // Graph_SetKey(graph, "E", "B", 0.2);
-  // Graph_SetKey(graph, "E", "A", 0.3);
 
   print("%[%3g]O\n", graph);
 
-  print("Weight with DC: %g\n", Graph_WeightKey(graph, "A", "C"));
+  if (Graph_ReachesKey(graph, "A", "C")) {
+    // Expects: 0.8
+    print("Smallest weight: %g\n", Graph_WeightKey(graph, "A", "C"));
+  }
+
+  Graph_SetKey(graph, "A", "E", -1);
+
+  if (Graph_ReachesKey(graph, "A", "C")) {
+    // Expects: 0.9
+    print("Weight without AE: %g\n", Graph_WeightKey(graph, "A", "C"));
+  }
 
   Graph_SetKey(graph, "D", "C", -1);
 
-  print("Weight without DC: %g\n", Graph_WeightKey(graph, "A", "C"));
+  if (Graph_ReachesKey(graph, "A", "C")) {
+    // Expects: 0.11
+    print("Weight without DC: %g\n", Graph_WeightKey(graph, "A", "C"));
+  }
+
+  Graph_SetKey(graph, "A", "B", -1);
+
+  if (Graph_ReachesKey(graph, "A", "C")) {
+    // Should not print (doesn't reach)
+    print("Weight without AB: %g\n", Graph_WeightKey(graph, "A", "C"));
+  }
 
   DELETE (graph);
 

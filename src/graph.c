@@ -177,68 +177,92 @@ Matrix *_(AdjacencyMatrix)()
   return m;
 }
 
+#undef TYPENAME
+/*============================================================================*/
+/* PRIVATE CLASS                                                              */
+/*============================================================================*/
+#define TYPENAME Head
 
 /******************************************************************************/
-List *STATIC (nodes)(Matrix *base, Matrix *current, int step, int i, int j)
+OBJECT (Matrix *state, int vertex, double distance) NOBASE
+  Matrix *state;
+  int     vertex;
+  double  distance;
+END_OBJECT(NULL, 0, 0.0);
+
+/******************************************************************************/
+Head *_(Construct)(Matrix *state, int vertex, double distance)
 {
-  List *list = NULL;
-
-  // Initialize current with the base
-  current = IFNULL(current, base);
-
-  if (current->base[i][j]) {
-    list = NEW (List) ();
-  } else if (step < current->cols) {
-    list = Graph_nodes(base, Matrix_Cross(Matrix_Copy(base), Matrix_Copy(current)), step + 1, i, j);
-
-    if (list) {
-      int prev = List_Empty(list) ? i : *(int*)List_Head(list);
-
-      Vec *row = Matrix_Row(base, prev);
-      Vec *col = Matrix_Col(current, j);
-
-      for (int k = 0; k < row->dimension; k++) {
-        if (row->base[k] && col->base[k])
-        {
-          List_AddValue(list, TYPEOF (int), &k);
-          break;
-        }
-      }
-
-      DELETE (row);
-      DELETE (col);
-    }
+  if (this) {
+    this->state    = Matrix_Copy(state);
+    this->vertex   = vertex;
+    this->distance = distance;
   }
 
-  DELETE (current);
-
-  return list;
+  return this;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-double _(Weight)(int i, int j)
+/******************************************************************************/
+Head *_(Split)(int vertex)
 {
-  double  weight      = -1;
-  List   *throughpath = Graph_nodes(Graph_AdjacencyMatrix(this), NULL, 0, i, j);
+  Head   *new      = NULL;
+  double  distance = this->state->base[this->vertex][vertex];
 
-  if (throughpath) {
-    int last = i;
+  if (distance > 0) {
+    new = NEW (Head) (this->state, vertex, this->distance + distance);
 
-    weight = 0;
-
-    for (List *l = throughpath; !List_Empty(l); l = List_Next(l)) {
-      int next = *(int*)List_Head(l);
-
-      weight += BASE(0)->base[last][next];
-      last    = next;
-    }
-
-    weight += BASE(0)->base[last][j];
-
-    DELETE (throughpath);
+    new->state->base[this->vertex][vertex] = -1;
   }
 
-  return weight;
+  return new;
+}
+
+/******************************************************************************/
+void _(Destruct)()
+{
+  DELETE (this->state);
+}
+
+#undef TYPENAME
+/*============================================================================*/
+#define TYPENAME Graph
+
+////////////////////////////////////////////////////////////////////////////////
+double _(Weight)(int s, int e)
+{
+  List   *heads    = List_Push(NEW (List)(), NEW (Head) (BASE(0), s, 0));
+  List   *nexts    = NEW (List)();
+  double  distance = -1;
+
+  while (List_Size(heads) > 0) {
+    for (List *l = heads; !List_Empty(l); l = List_Next(l)) {
+      Head *h = List_Head(l);
+
+      for (int i = 0; i < h->state->rows; i++) {
+        Head *next = Head_Split(h, i);
+
+        if (next && (distance == -1 || next->distance < distance)) {
+          if (i == e) {
+            distance = next->distance;
+          } else {
+            nexts = List_Push(nexts, next);
+            next  = NULL;
+          }
+        }
+
+        DELETE (next);
+      }
+    }
+
+    DELETE (heads);
+    heads = nexts;
+    nexts = NEW (List)();
+  }
+
+  DELETE (heads);
+  DELETE (nexts);
+
+  return distance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -260,12 +284,18 @@ double _(WeightLabel)(const String *li, const String *lj)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int _(Reaches)(int i, int j)
+int _(Reaches)(int s, int e)
 {
-  List *throughpath = Graph_nodes(Graph_AdjacencyMatrix(this), NULL, 0, i, j);
-  int   reaches     = throughpath != NULL;
+  Matrix *adjacency   = Graph_AdjacencyMatrix(this);
+  Matrix *accumulator = Matrix_Copy(adjacency);  
+  int     reaches     = 0;
 
-  DELETE (throughpath);
+  for (int i = 0;!(reaches |= accumulator->base[s][e] > 0) && i < this->base.rows; i++) {
+     accumulator = Matrix_Cross(accumulator, Matrix_Copy(adjacency));
+  }
+
+  DELETE (accumulator);
+  DELETE (adjacency);
 
   return reaches;
 }
@@ -276,7 +306,7 @@ int _(ReachesKey)(const char *li, const char *lj)
   int i = Graph_Key(this, li);
   int j = Graph_Key(this, lj);
 
-  return Graph_Weight(this, i, j);
+  return Graph_Reaches(this, i, j);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -285,7 +315,7 @@ int _(ReachesLabel)(const String *li, const String *lj)
   int i = Graph_Label(this, li);
   int j = Graph_Label(this, lj);
 
-  return Graph_Weight(this, i, j);
+  return Graph_Reaches(this, i, j);
 }
 
 #undef TYPENAME
