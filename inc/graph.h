@@ -32,7 +32,7 @@ void    _(Remove)(const String *label);
 void    _(Set)(int i, int j, double weight);
 void    _(SetKey)(const char *li, const char *lj, double weight);
 void    _(SetLabel)(const String *li, const String *lj, double weight);
-Matrix *_(AdjacendyMatrix)();
+Matrix *_(AdjacencyMatrix)();
 double  _(Weight)(int i, int j);
 double  _(WeightKey)(const char *li, const char *lj);
 double  _(WeightLabel)(const String *li, const String *lj);
